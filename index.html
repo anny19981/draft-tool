@@ -54,12 +54,94 @@
   <main class="mdl-layout__content">
 
     <!-- TAB 1: Übersicht -->
-    <section class="mdl-layout__tab-panel is-active" id="tab1">
-      <div class="page-content" style="padding:20px;">
-        <h2>Nächster Termin: 20.11.2025</h2>
-        <p id="timer" style="font-size:40px;text-align:center;"></p>
-      </div>
-    </section>
+<section class="mdl-layout__tab-panel is-active" id="tab1">
+  <style>
+    /* 🎨 Styling nur für diesen Abschnitt */
+    .overview-card {
+      background: linear-gradient(135deg, #0a0a1a, #162447);
+      color: #f4f4f4;
+      border-radius: 15px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+      padding: 30px;
+      max-width: 600px;
+      margin: 60px auto;
+      text-align: center;
+      font-family: 'Poppins', sans-serif;
+      border: 2px solid rgba(255, 215, 0, 0.2);
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    .overview-card:hover {
+      transform: scale(1.02);
+      box-shadow: 0 6px 25px rgba(255, 215, 0, 0.3);
+    }
+
+    .overview-card h2 {
+      font-size: 2rem;
+      color: #ffd700;
+      margin-bottom: 10px;
+      text-shadow: 0 0 10px rgba(255, 215, 0, 0.4);
+    }
+
+    .overview-card p.subtitle {
+      font-size: 1.1rem;
+      color: #ccc;
+      margin-bottom: 25px;
+    }
+
+    #timer {
+      font-size: 2.5rem;
+      letter-spacing: 2px;
+      color: #00d9ff;
+      text-shadow: 0 0 15px rgba(0, 217, 255, 0.7);
+      font-weight: bold;
+    }
+
+    @media (max-width: 600px) {
+      .overview-card {
+        padding: 20px;
+      }
+      #timer {
+        font-size: 2rem;
+      }
+    }
+  </style>
+
+  <div class="page-content">
+    <div class="overview-card">
+      <h2>LAN-Party Countdown</h2>
+      <p class="subtitle">Nächster Termin: <strong>20. November 2025</strong></p>
+      <p id="timer">Lädt…</p>
+    </div>
+  </div>
+
+  <script>
+    // 🕒 Countdown-Script
+    const targetDate = new Date("Nov 20, 2025 14:00:00").getTime();
+    const timerEl = document.getElementById("timer");
+
+    function updateCountdown() {
+      const now = new Date().getTime();
+      const diff = targetDate - now;
+
+      if (diff <= 0) {
+        timerEl.textContent = "🎉 Es ist LAN-Zeit!";
+        return;
+      }
+
+      const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+      const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+      const mins = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+      const secs = Math.floor((diff % (1000 * 60)) / 1000);
+
+      timerEl.textContent = `${days}d ${hours}h ${mins}m ${secs}s`;
+    }
+
+    updateCountdown();
+    setInterval(updateCountdown, 1000);
+  </script>
+</section>
+
 
     <!-- TAB 2: Games -->
     <section class="mdl-layout__tab-panel" id="tab2">
@@ -248,3 +330,4 @@ window.addEventListener("DOMContentLoaded",async()=>{
 </script>
 </body>
 </html>
+
