@@ -144,16 +144,97 @@
 
 
     <!-- TAB 2: Games -->
-    <section class="mdl-layout__tab-panel" id="tab2">
-      <div class="page-content" style="padding:20px;">
-        <ul class="mdl-list">
-          <li class="mdl-list__item">Anno</li>
-          <li class="mdl-list__item">World of Warships</li>
-          <li class="mdl-list__item">League of Legends</li>
-          <li class="mdl-list__item">Mario Kart</li>
-        </ul>
-      </div>
-    </section>
+
+<section class="mdl-layout__tab-panel" id="tab2">
+  <div class="page-content">
+
+    <h2>🎮 Games</h2>
+    <p>Hier kannst du alle Spiele eintragen, die bei der LAN-Party gespielt werden sollen.</p>
+
+    <!-- Eingabe & Button -->
+    <div style="display:flex; gap:10px; margin-bottom:20px;">
+      <input type="text" id="gameInput" placeholder="Neues Spiel hinzufügen..." style="flex:1; padding:10px; border-radius:6px; border:1px solid #ccc;">
+      <button id="addGameBtn" class="mdl-button mdl-js-button mdl-button--colored">+ Hinzufügen</button>
+    </div>
+
+    <!-- Game Liste -->
+    <ul id="gameList" class="mdl-list" style="max-width:500px; margin:auto; padding:0;"></ul>
+
+    <script>
+      // === GAME LIST MANAGER ===
+      const gameInput = document.getElementById('gameInput');
+      const addGameBtn = document.getElementById('addGameBtn');
+      const gameList = document.getElementById('gameList');
+
+      // Spiele aus dem LocalStorage laden
+      let games = JSON.parse(localStorage.getItem('games')) || ["League of Legends", "Valorant", "Minecraft"];
+
+      // Funktion: Liste aktualisieren
+      function renderGames() {
+        gameList.innerHTML = "";
+        games.forEach((game, index) => {
+          const li = document.createElement('li');
+          li.className = "mdl-list__item mdl-shadow--2dp";
+          li.style.marginBottom = "10px";
+          li.style.borderRadius = "6px";
+          li.style.display = "flex";
+          li.style.justifyContent = "space-between";
+          li.style.alignItems = "center";
+          li.style.padding = "10px 16px";
+          li.style.background = "#f9f9f9";
+
+          const span = document.createElement('span');
+          span.textContent = game;
+          span.style.fontWeight = "500";
+
+          const delBtn = document.createElement('button');
+          delBtn.className = "mdl-button mdl-js-button mdl-button--accent";
+          delBtn.innerHTML = '<i class="material-icons">delete</i>';
+          delBtn.onclick = () => removeGame(index);
+
+          li.appendChild(span);
+          li.appendChild(delBtn);
+          gameList.appendChild(li);
+        });
+      }
+
+      // Funktion: Neues Spiel hinzufügen
+      function addGame() {
+        const newGame = gameInput.value.trim();
+        if (newGame === "") {
+          alert("Bitte gib einen Spielnamen ein!");
+          return;
+        }
+        games.push(newGame);
+        gameInput.value = "";
+        saveGames();
+        renderGames();
+      }
+
+      // Funktion: Spiel löschen
+      function removeGame(index) {
+        games.splice(index, 1);
+        saveGames();
+        renderGames();
+      }
+
+      // Funktion: Speicherung
+      function saveGames() {
+        localStorage.setItem('games', JSON.stringify(games));
+      }
+
+      // Event Listener
+      addGameBtn.addEventListener('click', addGame);
+      gameInput.addEventListener('keypress', function (e) {
+        if (e.key === "Enter") addGame();
+      });
+
+      // Initiales Rendern
+      renderGames();
+    </script>
+  </div>
+</section>
+
 
     <!-- TAB 3: Essen -->
     <section class="mdl-layout__tab-panel" id="tab3">
@@ -330,4 +411,5 @@ window.addEventListener("DOMContentLoaded",async()=>{
 </script>
 </body>
 </html>
+
 
