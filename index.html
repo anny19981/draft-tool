@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LAN-Party</title>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
+  <link rel="stylesheet" href="https://code.getmdl.io/1.3.0/material.indigo-pink.min.css">
+  <script defer src="https://code.getmdl.io/1.3.0/material.min.js"></script>
+  <style>
+    body { background:#fafafa; }
+    #draft {
+      display:flex; justify-content:space-between; align-items:flex-start; gap:20px;
+    }
+    .team { width:25%; text-align:center; }
+    .bans, .picks {
+      display:flex; justify-content:center; flex-wrap:wrap; gap:6px; margin-bottom:10px;
+    }
+    .bans img, .picks img {
+      width:50px; height:50px; border-radius:8px; border:2px solid #555;
+    }
+    .champion-grid {
+      display:grid; grid-template-columns:repeat(auto-fill,50px);
+      gap:6px; max-height:400px; overflow-y:auto; justify-content:center;
+    }
+    .champion-grid img {
+      width:48px; height:48px; border-radius:6px; cursor:pointer;
+      transition:transform .1s;
+    }
+    .champion-grid img:hover { transform:scale(1.15); }
+    .phase-info { text-align:center; font-size:18px; font-weight:bold; margin-bottom:10px; }
+    .role-icon { width:24px; vertical-align:middle; margin-left:4px; }
+    .champion-icon { width:40px; vertical-align:middle; margin-right:6px; }
+    td img { vertical-align:middle; }
+    .item-suggestions img { width:32px; margin:2px; }
+  </style>
+</head>
+
+<body>
+<div class="mdl-layout mdl-js-layout mdl-layout--fixed-header">
+  <header class="mdl-layout__header">
+    <div class="mdl-layout__header-row">
+      <span class="mdl-layout-title">LAN-Party</span>
+    </div>
+    <div class="mdl-layout__tab-bar mdl-js-ripple-effect">
+      <a href="#tab1" class="mdl-layout__tab is-active">Übersicht</a>
+      <a href="#tab2" class="mdl-layout__tab">Games</a>
+      <a href="#tab3" class="mdl-layout__tab">Essen</a>
+      <a href="#tab4" class="mdl-layout__tab">Spielplan</a>
+      <a href="#tab5" class="mdl-layout__tab">Draft</a>
+    </div>
+  </header>
+
+  <main class="mdl-layout__content">
+
+    <!-- TAB 1: Übersicht -->
+    <section class="mdl-layout__tab-panel is-active" id="tab1">
+      <div class="page-content" style="padding:20px;">
+        <h2>Nächster Termin: 20.11.2025</h2>
+        <p id="timer" style="font-size:40px;text-align:center;"></p>
+      </div>
+    </section>
+
+    <!-- TAB 2: Games -->
+    <section class="mdl-layout__tab-panel" id="tab2">
+      <div class="page-content" style="padding:20px;">
+        <ul class="mdl-list">
+          <li class="mdl-list__item">Anno</li>
+          <li class="mdl-list__item">World of Warships</li>
+          <li class="mdl-list__item">League of Legends</li>
+          <li class="mdl-list__item">Mario Kart</li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- TAB 3: Essen -->
+    <section class="mdl-layout__tab-panel" id="tab3">
+      <div class="page-content" style="padding:20px;">
+        <h3>Essensplan</h3>
+        <input id="foodInput" placeholder="Gericht..." style="padding:6px;">
+        <button id="addFoodBtn" class="mdl-button mdl-js-button mdl-button--raised">Add</button>
+        <ul id="foodList"></ul>
+      </div>
+    </section>
+
+    <!-- TAB 4: Spielplan -->
+    <section class="mdl-layout__tab-panel" id="tab4">
+      <div class="page-content" style="padding:20px;">
+        <h3>League of Legends Spielplan</h3>
+        <button id="addRowBtn" class="mdl-button mdl-js-button mdl-button--fab mdl-button--colored">
+          <i class="material-icons">add</i>
+        </button>
+        <table id="lolTable" class="mdl-data-table mdl-js-data-table mdl-shadow--2dp"
+               style="width:100%; margin-top:20px;">
+          <thead>
+            <tr>
+              <th>Spieler</th><th>Rolle</th><th>Champion</th>
+              <th>Gegner</th><th>Items</th>
+            </tr>
+          </thead><tbody></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- TAB 5: Draft -->
+    <section class="mdl-layout__tab-panel" id="tab5">
+      <div class="page-content" style="padding:20px;">
+        <h3>Mini Draft Tool – Pick &amp; Ban</h3>
+        <div id="draft">
+          <div id="team-blue" class="team"><h4>Team Blau</h4><div class="bans"></div><div class="picks"></div></div>
+          <div id="center">
+            <div class="phase-info">Phase: <span id="phase">BANS</span></div>
+            <div class="champion-grid"></div>
+          </div>
+          <div id="team-red" class="team"><h4>Team Rot</h4><div class="bans"></div><div class="picks"></div></div>
+        </div>
+        <div style="text-align:center;margin-top:20px;">
+          <button id="nextPhaseBtn" class="mdl-button mdl-js-button mdl-button--raised mdl-button--accent">Nächste Phase</button>
+          <button id="resetDraftBtn" class="mdl-button mdl-js-button mdl-button--raised">Reset</button>
+        </div>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<!-- ========== JAVASCRIPT ========== -->
+<script>
+// === Timer ===
+const countDownDate = new Date("Nov 20, 2025 14:00:00").getTime();
+setInterval(()=>{
+  const dist=countDownDate-Date.now();
+  if(dist<0){document.getElementById("timer").textContent="Party läuft!";return;}
+  const d=Math.floor(dist/(1000*60*60*24));
+  const h=Math.floor((dist%(1000*60*60*24))/(1000*60*60));
+  const m=Math.floor((dist%(1000*60*60))/(1000*60));
+  const s=Math.floor((dist%(1000*60))/1000);
+  document.getElementById("timer").textContent=`${d}d ${h}h ${m}m ${s}s`;
+},1000);
+
+// === Essen ===
+document.getElementById("addFoodBtn").onclick=()=>{
+  const val=document.getElementById("foodInput").value.trim();
+  if(!val)return;
+  const li=document.createElement("li");
+  li.textContent=val;
+  document.getElementById("foodList").append(li);
+  document.getElementById("foodInput").value="";
+};
+
+// === Spielplan ===
+let scheduleChampionData={}, itemData={}, latestVersion="15.21.1";
+const ROLE_ICONS={
+  TOP:"https://cdn.jsdelivr.net/gh/CommunityDragon/Data/@latest/img/map11/position-top.svg",
+  JUNGLE:"https://cdn.jsdelivr.net/gh/CommunityDragon/Data/@latest/img/map11/position-jungle.svg",
+  MID:"https://cdn.jsdelivr.net/gh/CommunityDragon/Data/@latest/img/map11/position-middle.svg",
+  ADC:"https://cdn.jsdelivr.net/gh/CommunityDragon/Data/@latest/img/map11/position-bottom.svg",
+  SUPPORT:"https://cdn.jsdelivr.net/gh/CommunityDragon/Data/@latest/img/map11/position-utility.svg"
+};
+async function loadChampionData(){
+  try{
+    const ver=await fetch("https://ddragon.leagueoflegends.com/api/versions.json");
+    const versions=await ver.json(); latestVersion=versions[0];
+    const res=await fetch(`https://ddragon.leagueoflegends.com/cdn/${latestVersion}/data/en_US/champion.json`);
+    const data=await res.json(); scheduleChampionData=data.data;
+  }catch(e){console.warn("API nicht erreichbar");}
+}
+function populateChampionSelect(sel){
+  sel.innerHTML='<option value="">Champion</option>';
+  Object.values(scheduleChampionData).forEach(c=>{
+    const o=document.createElement("option");o.value=c.name;o.textContent=c.name;sel.append(o);
+  });
+}
+function updateChampionIcon(row,name){
+  const img=row.querySelector(".champion-icon");
+  if(!name||!scheduleChampionData[name]){img.src="";return;}
+  const champ=scheduleChampionData[name];
+  img.src=`https://ddragon.leagueoflegends.com/cdn/${latestVersion}/img/champion/${champ.image.full}`;
+}
+function showItems(row,name){
+  const cell=row.querySelector(".item-suggestions");
+  cell.textContent=name?`Empfohlene Items für ${name}`:"–";
+}
+function addRow(data={}){
+  const tr=document.createElement("tr");
+  tr.innerHTML=`<td><input class="player-input" value="${data.player||""}"></td>
+  <td><select class="role-select">
+    <option>TOP</option><option>JUNGLE</option><option>MID</option><option>ADC</option><option>SUPPORT</option>
+  </select><img class="role-icon" src="${ROLE_ICONS[data.role]||ROLE_ICONS.TOP}"></td>
+  <td><img class="champion-icon"><select class="champion-select"></select></td>
+  <td><input class="opponent-input" value="${data.opponent||""}"></td>
+  <td class="item-suggestions">–</td>`;
+  document.querySelector("#lolTable tbody").append(tr);
+  const roleSel=tr.querySelector(".role-select");
+  roleSel.onchange=()=>tr.querySelector(".role-icon").src=ROLE_ICONS[roleSel.value];
+  const champSel=tr.querySelector(".champion-select");
+  populateChampionSelect(champSel);
+  champSel.onchange=()=>{updateChampionIcon(tr,champSel.value);showItems(tr,champSel.value);}
+}
+document.getElementById("addRowBtn").onclick=()=>addRow();
+
+// === Draft ===
+let draftChampionData={}, picked={blue:[],red:[]}, banned={blue:[],red:[]},
+    phase="bans", currentTeam="blue", version="15.21.1";
+async function loadChampions(){
+  const versions=await (await fetch("https://ddragon.leagueoflegends.com/api/versions.json")).json();
+  version=versions[0];
+  const data=await (await fetch(`https://ddragon.leagueoflegends.com/cdn/${version}/data/en_US/champion.json`)).json();
+  draftChampionData=data.data;
+  renderChampionGrid();
+}
+function renderChampionGrid(){
+  const grid=document.querySelector(".champion-grid");grid.innerHTML="";
+  Object.values(draftChampionData).forEach(c=>{
+    const img=document.createElement("img");
+    img.src=`https://ddragon.leagueoflegends.com/cdn/${version}/img/champion/${c.image.full}`;
+    img.title=c.name;
+    img.onclick=()=>selectChampion(c.name,img.src);
+    grid.append(img);
+  });
+}
+function selectChampion(name,src){
+  const teamBox=currentTeam==="blue"?"team-blue":"team-red";
+  const teamObj=phase==="bans"?banned:picked;
+  if([...banned.blue,...banned.red,...picked.blue,...picked.red].includes(name))return;
+  if(teamObj[currentTeam].length>=5)return;
+  teamObj[currentTeam].push(name);
+  const img=document.createElement("img");img.src=src;
+  document.querySelector(`#${teamBox} .${phase==="bans"?"bans":"picks"}`).append(img);
+  currentTeam=currentTeam==="blue"?"red":"blue";
+}
+document.getElementById("nextPhaseBtn").onclick=()=>{
+  if(phase==="bans"){phase="picks";currentTeam="blue";}
+  else{phase="done";}
+  document.getElementById("phase").textContent=phase.toUpperCase();
+};
+document.getElementById("resetDraftBtn").onclick=()=>{
+  picked={blue:[],red:[]};banned={blue:[],red:[]};phase="bans";currentTeam="blue";
+  document.querySelectorAll(".bans,.picks").forEach(e=>e.innerHTML="");
+  document.getElementById("phase").textContent="BANS";
+};
+
+// === Init ===
+window.addEventListener("DOMContentLoaded",async()=>{
+  await loadChampionData(); addRow(); // start table
+  await loadChampions();              // load draft champs
+});
+</script>
+</body>
+</html>

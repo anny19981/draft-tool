@@ -1,0 +1,54 @@
+{
+  "champions": [
+    {
+      "name": "Garen",
+      "role": "TOP",
+      "items": ["Stärke der Dreieinigkeit", "Dornenpanzer", "Tanz des Todes", "Schwarzes Beil", "Schutzengel"]
+    },
+    {
+      "name": "Darius",
+      "role": "TOP",
+      "items": ["Schwarzes Beil", "Panzer des toten Mannes", "Tanz des Todes", "Steraks Pegel", "Dornenpanzer"]
+    },
+    {
+      "name": "Lee Sin",
+      "role": "JUNGLE",
+      "items": ["Goredrinker", "Schwarzes Beil", "Tanz des Todes", "Schutzengel", "Gefräßige Hydra"]
+    },
+    {
+      "name": "Kha'Zix",
+      "role": "JUNGLE",
+      "items": ["Dämmerungsklinge von Draktharr", "Youmus Geistklinge", "Seryldas Bitterkeit", "Schutzengel"]
+    },
+    {
+      "name": "Ahri",
+      "role": "MID",
+      "items": ["Ludens Begierde", "Zhonyas Stundenglas", "Leerenstab", "Schattenflamme", "Rabadons Todeshaube"]
+    },
+    {
+      "name": "Zed",
+      "role": "MID",
+      "items": ["Dämmerungsklinge von Draktharr", "Youmus Geistklinge", "Seryldas Bitterkeit", "Klaue des Meuchlers"]
+    },
+    {
+      "name": "Jinx",
+      "role": "ADC",
+      "items": ["Krakenbezwinger", "Runaans Wirbelsturm", "Klinge der Unendlichkeit", "Blutdürster", "Lord Dominiks Grüße"]
+    },
+    {
+      "name": "Caitlyn",
+      "role": "ADC",
+      "items": ["Galeforce", "Schnellfeuer-Geschütz", "Klinge der Unendlichkeit", "Lord Dominiks Grüße"]
+    },
+    {
+      "name": "Thresh",
+      "role": "SUPPORT",
+      "items": ["Zekes Konvergenz", "Ritterschwur", "Eisgeborenen-Handschuh", "Erlösung", "Schulterplatten des weißen Felsens"]
+    },
+    {
+      "name": "Leona",
+      "role": "SUPPORT",
+      "items": ["Zekes Konvergenz", "Ritterschwur", "Dornenpanzer", "Eisgeborenen-Handschuh"]
+    }
+  ]
+}
