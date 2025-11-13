@@ -60,6 +60,33 @@
   color: #007bff;
 }
 
+    /* Essensplan */
+.day-plan-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 20px;
+}
+
+.day-plan-table th,
+.day-plan-table td {
+  border: 1px solid #ccc;
+  padding: 8px;
+  text-align: center;
+}
+
+.day-plan-table th {
+  background-color: #3f51b5;
+  color: white;
+}
+
+.day-plan-table td input {
+  width: 90%;
+  padding: 4px;
+  border: 1px solid #aaa;
+  border-radius: 4px;
+  text-align: center;
+}
+
   </style>
 </head>
 
@@ -263,15 +290,22 @@
 </section>
 
 
-    <!-- TAB 3: Essen -->
-    <section class="mdl-layout__tab-panel" id="tab3">
-      <div class="page-content" style="padding:20px;">
-        <h3>Essensplan</h3>
-        <input id="foodInput" placeholder="Gericht..." style="padding:6px;">
-        <button id="addFoodBtn" class="mdl-button mdl-js-button mdl-button--raised">Add</button>
-        <ul id="foodList"></ul>
-      </div>
-    </section>
+   <!-- TAB 3: Essen / Tagesplan -->
+<section class="mdl-layout__tab-panel" id="tab3">
+  <div class="page-content" style="padding:20px; max-width:700px; margin:auto;">
+    <h3>Essens-Tagesplan</h3>
+    
+    <!-- Button um neuen Tag hinzuzufügen -->
+    <div style="margin-bottom:20px; text-align:center;">
+      <input id="newDayInput" placeholder="Neuer Tag..." style="padding:6px; width:150px;">
+      <button id="addDayBtn" class="mdl-button mdl-js-button mdl-button--raised mdl-button--colored">Tag hinzufügen</button>
+    </div>
+
+    <!-- Plan wird hier gerendert -->
+    <div id="dayPlanContainer"></div>
+  </div>
+</section>
+
 
     <!-- TAB 4: Spielplan -->
     <section class="mdl-layout__tab-panel" id="tab4">
@@ -328,15 +362,95 @@ setInterval(()=>{
   document.getElementById("timer").textContent=`${d}d ${h}h ${m}m ${s}s`;
 },1000);
 
-// === Essen ===
-document.getElementById("addFoodBtn").onclick=()=>{
-  const val=document.getElementById("foodInput").value.trim();
-  if(!val)return;
-  const li=document.createElement("li");
-  li.textContent=val;
-  document.getElementById("foodList").append(li);
-  document.getElementById("foodInput").value="";
+// === ESSENSPLAN (Tagesübersicht) ===
+// ====== Tagesplan Datenstruktur ======
+let dayPlan = JSON.parse(localStorage.getItem("dayPlan")) || [
+  { day: "Donnerstag", morning: "", lunch: "", evening: "" },
+  { day: "Freitag", morning: "", lunch: "", evening: "" },
+  { day: "Samstag", morning: "", lunch: "", evening: "" },
+  { day: "Sonntag", morning: "", lunch: "", evening: "" },
+];
+
+// ====== Funktion zum Rendern ======
+function renderDayPlan() {
+  const container = document.getElementById("dayPlanContainer");
+  container.innerHTML = "";
+
+  dayPlan.forEach((d, index) => {
+    const dayDiv = document.createElement("div");
+    dayDiv.style.border = "1px solid #ccc";
+    dayDiv.style.borderRadius = "8px";
+    dayDiv.style.padding = "10px";
+    dayDiv.style.marginBottom = "12px";
+    dayDiv.style.background = "#f9f9f9";
+
+    const titleDiv = document.createElement("div");
+    titleDiv.style.display = "flex";
+    titleDiv.style.justifyContent = "space-between";
+    titleDiv.style.alignItems = "center";
+    titleDiv.innerHTML = `<strong>${d.day}</strong>`;
+
+    // Löschen Button für den Tag
+    const delDayBtn = document.createElement("button");
+    delDayBtn.className = "mdl-button mdl-js-button mdl-button--accent";
+    delDayBtn.textContent = "🗑️";
+    delDayBtn.onclick = () => {
+      dayPlan.splice(index, 1);
+      saveDayPlan();
+      renderDayPlan();
+    };
+    titleDiv.appendChild(delDayBtn);
+    dayDiv.appendChild(titleDiv);
+
+    // Eingabefelder für Frühstück, Mittag, Abend
+    ["morning", "lunch", "evening"].forEach(meal => {
+      const mealDiv = document.createElement("div");
+      mealDiv.style.display = "flex";
+      mealDiv.style.alignItems = "center";
+      mealDiv.style.marginTop = "6px";
+
+      const label = document.createElement("span");
+      label.textContent = meal === "morning" ? "Morgen: " : meal === "lunch" ? "Mittag: " : "Abend: ";
+      label.style.width = "70px";
+
+      const input = document.createElement("input");
+      input.value = d[meal];
+      input.style.flex = "1";
+      input.style.padding = "4px";
+      input.style.borderRadius = "4px";
+      input.style.border = "1px solid #ccc";
+
+      input.oninput = () => {
+        dayPlan[index][meal] = input.value;
+        saveDayPlan();
+      };
+
+      mealDiv.appendChild(label);
+      mealDiv.appendChild(input);
+      dayDiv.appendChild(mealDiv);
+    });
+
+    container.appendChild(dayDiv);
+  });
+}
+
+// ====== Speichern im LocalStorage ======
+function saveDayPlan() {
+  localStorage.setItem("dayPlan", JSON.stringify(dayPlan));
+}
+
+// ====== Neuer Tag hinzufügen ======
+document.getElementById("addDayBtn").onclick = () => {
+  const val = document.getElementById("newDayInput").value.trim();
+  if (!val) return;
+  dayPlan.push({ day: val, morning: "", lunch: "", evening: "" });
+  document.getElementById("newDayInput").value = "";
+  saveDayPlan();
+  renderDayPlan();
 };
+
+// ====== Initiales Rendern ======
+renderDayPlan();
 
 // === Spielplan ===
 let scheduleChampionData={}, itemData={}, latestVersion="15.21.1";
@@ -512,6 +626,7 @@ window.addEventListener("DOMContentLoaded",async()=>{
 </script>
 </body>
 </html>
+
 
 
 
