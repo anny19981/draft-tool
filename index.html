@@ -33,6 +33,33 @@
     .champion-icon { width:40px; vertical-align:middle; margin-right:6px; }
     td img { vertical-align:middle; }
     .item-suggestions img { width:32px; margin:2px; }
+
+    /* Unterschiedliche Optik für Bans und Picks */
+.bans img.ban-icon {
+  border: 2px solid #d9534f; /* Rot */
+  box-shadow: 0 0 8px rgba(217,83,79,0.5);
+}
+
+.picks img.pick-icon {
+  border: 2px solid #5cb85c; /* Grün */
+  box-shadow: 0 0 8px rgba(92,184,92,0.5);
+}
+
+.phase-info {
+  font-size: 20px;
+  font-weight: bold;
+  color: #222;
+  margin-bottom: 10px;
+  background: #f0f0f0;
+  padding: 8px 12px;
+  border-radius: 8px;
+  display: inline-block;
+}
+
+#phase {
+  color: #007bff;
+}
+
   </style>
 </head>
 
@@ -363,45 +390,119 @@ function addRow(data={}){
 document.getElementById("addRowBtn").onclick=()=>addRow();
 
 // === Draft ===
-let draftChampionData={}, picked={blue:[],red:[]}, banned={blue:[],red:[]},
-    phase="bans", currentTeam="blue", version="15.21.1";
-async function loadChampions(){
-  const versions=await (await fetch("https://ddragon.leagueoflegends.com/api/versions.json")).json();
-  version=versions[0];
-  const data=await (await fetch(`https://ddragon.leagueoflegends.com/cdn/${version}/data/en_US/champion.json`)).json();
-  draftChampionData=data.data;
+let draftChampionData = {};
+let picked = { blue: [], red: [] };
+let banned = { blue: [], red: [] };
+let currentStep = 0;
+let version = "15.21.1";
+
+/*
+  🧩 Ablauf:
+  - 10 Bans (abwechselnd, 5 pro Team)
+  - 10 Picks (abwechselnd, 5 pro Team)
+*/
+const PHASES = [
+  // 10 BANS (abwechselnd)
+  { type: "ban", team: "blue" },
+  { type: "ban", team: "red" },
+  { type: "ban", team: "blue" },
+  { type: "ban", team: "red" },
+  { type: "ban", team: "blue" },
+  { type: "ban", team: "red" },
+  { type: "ban", team: "blue" },
+  { type: "ban", team: "red" },
+  { type: "ban", team: "blue" },
+  { type: "ban", team: "red" },
+
+  // 10 PICKS (abwechselnd)
+  { type: "pick", team: "blue" },
+  { type: "pick", team: "red" },
+  { type: "pick", team: "blue" },
+  { type: "pick", team: "red" },
+  { type: "pick", team: "blue" },
+  { type: "pick", team: "red" },
+  { type: "pick", team: "blue" },
+  { type: "pick", team: "red" },
+  { type: "pick", team: "blue" },
+  { type: "pick", team: "red" },
+];
+
+async function loadChampions() {
+  const versions = await (await fetch("https://ddragon.leagueoflegends.com/api/versions.json")).json();
+  version = versions[0];
+  const data = await (await fetch(`https://ddragon.leagueoflegends.com/cdn/${version}/data/en_US/champion.json`)).json();
+  draftChampionData = data.data;
   renderChampionGrid();
+  updatePhaseInfo();
 }
-function renderChampionGrid(){
-  const grid=document.querySelector(".champion-grid");grid.innerHTML="";
-  Object.values(draftChampionData).forEach(c=>{
-    const img=document.createElement("img");
-    img.src=`https://ddragon.leagueoflegends.com/cdn/${version}/img/champion/${c.image.full}`;
-    img.title=c.name;
-    img.onclick=()=>selectChampion(c.name,img.src);
+
+function renderChampionGrid() {
+  const grid = document.querySelector(".champion-grid");
+  grid.innerHTML = "";
+  Object.values(draftChampionData).forEach(c => {
+    const img = document.createElement("img");
+    img.src = `https://ddragon.leagueoflegends.com/cdn/${version}/img/champion/${c.image.full}`;
+    img.title = c.name;
+    img.onclick = () => selectChampion(c.name, img.src);
     grid.append(img);
   });
 }
-function selectChampion(name,src){
-  const teamBox=currentTeam==="blue"?"team-blue":"team-red";
-  const teamObj=phase==="bans"?banned:picked;
-  if([...banned.blue,...banned.red,...picked.blue,...picked.red].includes(name))return;
-  if(teamObj[currentTeam].length>=5)return;
-  teamObj[currentTeam].push(name);
-  const img=document.createElement("img");img.src=src;
-  document.querySelector(`#${teamBox} .${phase==="bans"?"bans":"picks"}`).append(img);
-  currentTeam=currentTeam==="blue"?"red":"blue";
+
+function selectChampion(name, src) {
+  const step = PHASES[currentStep];
+  if (!step) return; // Draft ist fertig
+
+  // Prüfen, ob Champion schon gewählt/gebanned ist
+  if ([...banned.blue, ...banned.red, ...picked.blue, ...picked.red].includes(name)) return;
+
+  const teamBox = step.team === "blue" ? "team-blue" : "team-red";
+  const list = step.type === "ban" ? banned[step.team] : picked[step.team];
+
+  // Limit prüfen
+  if (list.length >= 5) return;
+
+  list.push(name);
+
+  const img = document.createElement("img");
+  img.src = src;
+  img.classList.add(step.type === "ban" ? "ban-icon" : "pick-icon");
+  img.title = `${step.type.toUpperCase()}: ${name}`;
+  document.querySelector(`#${teamBox} .${step.type === "ban" ? "bans" : "picks"}`).append(img);
+
+  // Nächster Schritt
+  currentStep++;
+  updatePhaseInfo();
 }
-document.getElementById("nextPhaseBtn").onclick=()=>{
-  if(phase==="bans"){phase="picks";currentTeam="blue";}
-  else{phase="done";}
-  document.getElementById("phase").textContent=phase.toUpperCase();
+
+function updatePhaseInfo() {
+  const step = PHASES[currentStep];
+  const phaseEl = document.getElementById("phase");
+
+  if (!step) {
+    phaseEl.textContent = "🎉 Draft abgeschlossen!";
+    return;
+  }
+
+  const phaseName = step.type === "ban" ? "BAN" : "PICK";
+  const teamName = step.team === "blue" ? "Blau" : "Rot";
+  phaseEl.textContent = `${phaseName} – ${teamName} ist dran (${currentStep + 1}/${PHASES.length})`;
+}
+
+// Optionaler Button für manuelle Weitersteuerung
+document.getElementById("nextPhaseBtn").onclick = () => {
+  currentStep++;
+  updatePhaseInfo();
 };
-document.getElementById("resetDraftBtn").onclick=()=>{
-  picked={blue:[],red:[]};banned={blue:[],red:[]};phase="bans";currentTeam="blue";
-  document.querySelectorAll(".bans,.picks").forEach(e=>e.innerHTML="");
-  document.getElementById("phase").textContent="BANS";
+
+// Reset-Funktion
+document.getElementById("resetDraftBtn").onclick = () => {
+  picked = { blue: [], red: [] };
+  banned = { blue: [], red: [] };
+  currentStep = 0;
+  document.querySelectorAll(".bans,.picks").forEach(e => e.innerHTML = "");
+  updatePhaseInfo();
 };
+
 
 // === Init ===
 window.addEventListener("DOMContentLoaded",async()=>{
@@ -411,5 +512,6 @@ window.addEventListener("DOMContentLoaded",async()=>{
 </script>
 </body>
 </html>
+
 
 
