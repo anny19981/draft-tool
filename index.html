@@ -169,8 +169,14 @@
     </div>
   </div>
 
+<div class="overview-card">
+  <h2>Sonntag Football</h2>
+  <p class="subtitle">Nächster Termin: <strong>16. November 2025</strong></p>
+  <p id="timer2">Lädt…</p>
+</div>
+
   <script>
-    // 🕒 Countdown-Script
+    // 🕒 Countdown-Script 1
     const targetDate = new Date("Nov 20, 2025 14:00:00").getTime();
     const timerEl = document.getElementById("timer");
 
@@ -193,6 +199,30 @@
 
     updateCountdown();
     setInterval(updateCountdown, 1000);
+    // 🕒 Zweiter Timer
+const targetDate2 = new Date("Nov 21, 2025 18:00:00").getTime();
+const timerEl2 = document.getElementById("timer2");
+
+function updateCountdown2() {
+  const now = new Date().getTime();
+  const diff = targetDate2 - now;
+
+  if (diff <= 0) {
+    timerEl2.textContent = "🎉 Event 2 läuft!";
+    return;
+  }
+
+  const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+  const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+  const mins = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+  const secs = Math.floor((diff % (1000 * 60)) / 1000);
+
+  timerEl2.textContent = `${days}d ${hours}h ${mins}m ${secs}s`;
+}
+
+updateCountdown2();
+setInterval(updateCountdown2, 1000);
+
   </script>
 </section>
 
@@ -626,6 +656,7 @@ window.addEventListener("DOMContentLoaded",async()=>{
 </script>
 </body>
 </html>
+
 
 
 
