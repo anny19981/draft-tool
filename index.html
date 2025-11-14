@@ -89,9 +89,29 @@
 
   </style>
 </head>
-
 <body>
-<div class="mdl-layout mdl-js-layout mdl-layout--fixed-header">
+  <!-- 1️⃣ Firebase initialisieren -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-app.js";
+    import { getAnalytics } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-analytics.js";
+    import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-database.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyD0NuzvLybziqAnFbhhqGpFVpLyovk0HW0",
+      authDomain: "webseite-lan-party.firebaseapp.com",
+      databaseURL: "https://webseite-lan-party-default-rtdb.europe-west1.firebasedatabase.app",
+      projectId: "webseite-lan-party",
+      storageBucket: "webseite-lan-party.firebasestorage.app",
+      messagingSenderId: "211545726174",
+      appId: "1:211545726174:web:68f5ca3a2b6e1627a9b64f",
+      measurementId: "G-5LGMTWYF0K"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const analytics = getAnalytics(app);
+    const db = getDatabase(app); // <- Hiermit greifst du auf die Realtime Database zu
+  </script>
+  <div class="mdl-layout mdl-js-layout mdl-layout--fixed-header">
   <header class="mdl-layout__header">
     <div class="mdl-layout__header-row">
       <span class="mdl-layout-title">LAN-Party</span>
@@ -105,8 +125,7 @@
       <a href="#tab6" class="mdl-layout__tab">Draft</a>
     </div>
   </header>
-
-  <main class="mdl-layout__content">
+ <main class="mdl-layout__content">
 
     <!-- TAB 1: Übersicht -->
 <section class="mdl-layout__tab-panel is-active" id="tab1">
@@ -197,7 +216,6 @@
         timerEl.textContent = "🎉 Es ist LAN-Zeit!";
         return;
       }
-
       const days = Math.floor(diff / (1000 * 60 * 60 * 24));
       const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
       const mins = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
@@ -234,8 +252,6 @@ setInterval(updateCountdown2, 1000);
 
   </script>
 </section>
-
-
     <!-- TAB 2: Games -->
 
 <section class="mdl-layout__tab-panel" id="tab2">
@@ -262,78 +278,75 @@ setInterval(updateCountdown2, 1000);
       // Spiele aus dem LocalStorage laden
       let games = JSON.parse(localStorage.getItem('games')) || ["League of Legends", "Valorant", "Minecraft"];
 
-      // Funktion: Liste aktualisieren
-      function renderGames() {
-        gameList.innerHTML = "";
-        games.forEach((game, index) => {
-          const li = document.createElement('li');
-          li.className = "mdl-list__item mdl-shadow--2dp";
-          li.style.marginBottom = "10px";
-          li.style.borderRadius = "6px";
-          li.style.display = "flex";
-          li.style.justifyContent = "space-between";
-          li.style.alignItems = "center";
-          li.style.padding = "10px 16px";
-          li.style.background = "#f9f9f9";
+function renderGames() {
+  gameList.innerHTML = "";
+  games.forEach((game, index) => {
+    const li = document.createElement('li');
+    li.className = "mdl-list__item mdl-shadow--2dp";
+    li.style.marginBottom = "10px";
+    li.style.borderRadius = "6px";
+    li.style.display = "flex";
+    li.style.justifyContent = "space-between";
+    li.style.alignItems = "center";
+    li.style.padding = "10px 16px";
+    li.style.background = "#f9f9f9";
 
-          const span = document.createElement('span');
-          span.textContent = game;
-          span.style.fontWeight = "500";
+    const span = document.createElement('span');
+    span.textContent = game;
+    span.style.fontWeight = "500";
 
-          const delBtn = document.createElement('button');
-          delBtn.className = "mdl-button mdl-js-button mdl-button--accent";
-          delBtn.innerHTML = '<i class="material-icons">delete</i>';
-          delBtn.onclick = () => removeGame(index);
+    const delBtn = document.createElement('button');
+    delBtn.className = "mdl-button mdl-js-button mdl-button--accent";
+    delBtn.innerHTML = '<i class="material-icons">delete</i>';
+    delBtn.onclick = () => removeGame(index);
 
-          li.appendChild(span);
-          li.appendChild(delBtn);
-          gameList.appendChild(li);
-        });
-      }
+    li.appendChild(span);
+    li.appendChild(delBtn);
+    gameList.appendChild(li);
+  });
+}
 
-      // Funktion: Neues Spiel hinzufügen
-      function addGame() {
-        const newGame = gameInput.value.trim();
-        if (newGame === "") {
-          alert("Bitte gib einen Spielnamen ein!");
-          return;
-        }
-        games.push(newGame);
-        gameInput.value = "";
-        saveGames();
-        renderGames();
-      }
+function addGame() {
+  const newGame = gameInput.value.trim();
+  if (!newGame) { alert("Bitte gib einen Spielnamen ein!"); return; }
+  games.push(newGame);
+  gameInput.value = "";
+  saveGames();
+  renderGames();
+}
 
-      // Funktion: Spiel löschen
-      function removeGame(index) {
-        games.splice(index, 1);
-        saveGames();
-        renderGames();
-      }
+function removeGame(index) {
+  games.splice(index, 1);
+  saveGames();
+  renderGames();
+}
 
-      // Funktion: Speicherung
-      function saveGames() {
-        localStorage.setItem('games', JSON.stringify(games));
-      }
+function saveGames() {
+  localStorage.setItem('games', JSON.stringify(games));
+}
 
-      // Event Listener
-      addGameBtn.addEventListener('click', addGame);
-      gameInput.addEventListener('keypress', function (e) {
-        if (e.key === "Enter") addGame();
-      });
+// Event Listener
+addGameBtn.addEventListener('click', addGame);
+gameInput.addEventListener('keypress', e => { if (e.key === "Enter") addGame(); });
 
-      // Initiales Rendern
-      renderGames();
+// Multi-Tab Sync
+window.addEventListener('storage', (e) => {
+  if (e.key === 'games') {
+    games = JSON.parse(e.newValue) || [];
+    renderGames();
+  }
+});
+
+// Initiales Rendern
+renderGames();
+
     </script>
   </div>
 </section>
-
-
    <!-- TAB 3: Essen / Tagesplan -->
 <section class="mdl-layout__tab-panel" id="tab3">
   <div class="page-content" style="padding:20px; max-width:700px; margin:auto;">
     <h3>Essens-Tagesplan</h3>
-    
     <!-- Button um neuen Tag hinzuzufügen -->
     <div style="margin-bottom:20px; text-align:center;">
       <input id="newDayInput" placeholder="Neuer Tag..." style="padding:6px; width:150px;">
@@ -431,23 +444,24 @@ setInterval(updateCountdown2, 1000);
 
   </main>
 </div>
-
 <!-- ========== JAVASCRIPT ========== -->
-<script>
+ <script>
 // === Timer ===
 const countDownDate = new Date("Nov 20, 2025 14:00:00").getTime();
-setInterval(()=>{
-  const dist=countDownDate-Date.now();
-  if(dist<0){document.getElementById("timer").textContent="Party läuft!";return;}
-  const d=Math.floor(dist/(1000*60*60*24));
-  const h=Math.floor((dist%(1000*60*60*24))/(1000*60*60));
-  const m=Math.floor((dist%(1000*60*60))/(1000*60));
-  const s=Math.floor((dist%(1000*60))/1000);
-  document.getElementById("timer").textContent=`${d}d ${h}h ${m}m ${s}s`;
-},1000);
+setInterval(() => {
+  const dist = countDownDate - Date.now();
+  if (dist < 0) {
+    document.getElementById("timer").textContent = "Party läuft!";
+    return;
+  }
+  const d = Math.floor(dist / (1000 * 60 * 60 * 24));
+  const h = Math.floor((dist % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+  const m = Math.floor((dist % (1000 * 60 * 60)) / (1000 * 60));
+  const s = Math.floor((dist % (1000 * 60)) / 1000);
+  document.getElementById("timer").textContent = `${d}d ${h}h ${m}m ${s}s`;
+}, 1000);
 
-// === ESSENSPLAN (Tagesübersicht) ===
-// ====== Tagesplan Datenstruktur ======
+// === ESSENSPLAN ===
 let dayPlan = JSON.parse(localStorage.getItem("dayPlan")) || [
   { day: "Donnerstag", morning: "", lunch: "", evening: "" },
   { day: "Freitag", morning: "", lunch: "", evening: "" },
@@ -455,7 +469,10 @@ let dayPlan = JSON.parse(localStorage.getItem("dayPlan")) || [
   { day: "Sonntag", morning: "", lunch: "", evening: "" },
 ];
 
-// ====== Funktion zum Rendern ======
+function saveDayPlan() {
+  localStorage.setItem("dayPlan", JSON.stringify(dayPlan));
+}
+
 function renderDayPlan() {
   const container = document.getElementById("dayPlanContainer");
   container.innerHTML = "";
@@ -474,7 +491,6 @@ function renderDayPlan() {
     titleDiv.style.alignItems = "center";
     titleDiv.innerHTML = `<strong>${d.day}</strong>`;
 
-    // Löschen Button für den Tag
     const delDayBtn = document.createElement("button");
     delDayBtn.className = "mdl-button mdl-js-button mdl-button--accent";
     delDayBtn.textContent = "🗑️";
@@ -486,7 +502,6 @@ function renderDayPlan() {
     titleDiv.appendChild(delDayBtn);
     dayDiv.appendChild(titleDiv);
 
-    // Eingabefelder für Frühstück, Mittag, Abend
     ["morning", "lunch", "evening"].forEach(meal => {
       const mealDiv = document.createElement("div");
       mealDiv.style.display = "flex";
@@ -518,12 +533,7 @@ function renderDayPlan() {
   });
 }
 
-// ====== Speichern im LocalStorage ======
-function saveDayPlan() {
-  localStorage.setItem("dayPlan", JSON.stringify(dayPlan));
-}
-
-// ====== Neuer Tag hinzufügen ======
+// Neuer Tag hinzufügen
 document.getElementById("addDayBtn").onclick = () => {
   const val = document.getElementById("newDayInput").value.trim();
   if (!val) return;
@@ -533,185 +543,28 @@ document.getElementById("addDayBtn").onclick = () => {
   renderDayPlan();
 };
 
-// ====== Initiales Rendern ======
-renderDayPlan();
-
-// === Spielplan ===
-let scheduleChampionData={}, itemData={}, latestVersion="15.21.1";
-const ROLE_ICONS={
-  TOP:"https://cdn.jsdelivr.net/gh/CommunityDragon/Data/@latest/img/map11/position-top.svg",
-  JUNGLE:"https://cdn.jsdelivr.net/gh/CommunityDragon/Data/@latest/img/map11/position-jungle.svg",
-  MID:"https://cdn.jsdelivr.net/gh/CommunityDragon/Data/@latest/img/map11/position-middle.svg",
-  ADC:"https://cdn.jsdelivr.net/gh/CommunityDragon/Data/@latest/img/map11/position-bottom.svg",
-  SUPPORT:"https://cdn.jsdelivr.net/gh/CommunityDragon/Data/@latest/img/map11/position-utility.svg"
-};
-async function loadChampionData(){
-  try{
-    const ver=await fetch("https://ddragon.leagueoflegends.com/api/versions.json");
-    const versions=await ver.json(); latestVersion=versions[0];
-    const res=await fetch(`https://ddragon.leagueoflegends.com/cdn/${latestVersion}/data/en_US/champion.json`);
-    const data=await res.json(); scheduleChampionData=data.data;
-  }catch(e){console.warn("API nicht erreichbar");}
-}
-function populateChampionSelect(sel){
-  sel.innerHTML='<option value="">Champion</option>';
-  Object.values(scheduleChampionData).forEach(c=>{
-    const o=document.createElement("option");o.value=c.name;o.textContent=c.name;sel.append(o);
-  });
-}
-function updateChampionIcon(row,name){
-  const img=row.querySelector(".champion-icon");
-  if(!name||!scheduleChampionData[name]){img.src="";return;}
-  const champ=scheduleChampionData[name];
-  img.src=`https://ddragon.leagueoflegends.com/cdn/${latestVersion}/img/champion/${champ.image.full}`;
-}
-function showItems(row,name){
-  const cell=row.querySelector(".item-suggestions");
-  cell.textContent=name?`Empfohlene Items für ${name}`:"–";
-}
-function addRow(data={}){
-  const tr=document.createElement("tr");
-  tr.innerHTML=`<td><input class="player-input" value="${data.player||""}"></td>
-  <td><select class="role-select">
-    <option>TOP</option><option>JUNGLE</option><option>MID</option><option>ADC</option><option>SUPPORT</option>
-  </select><img class="role-icon" src="${ROLE_ICONS[data.role]||ROLE_ICONS.TOP}"></td>
-  <td><img class="champion-icon"><select class="champion-select"></select></td>
-  <td><input class="opponent-input" value="${data.opponent||""}"></td>
-  <td class="item-suggestions">–</td>`;
-  document.querySelector("#lolTable tbody").append(tr);
-  const roleSel=tr.querySelector(".role-select");
-  roleSel.onchange=()=>tr.querySelector(".role-icon").src=ROLE_ICONS[roleSel.value];
-  const champSel=tr.querySelector(".champion-select");
-  populateChampionSelect(champSel);
-  champSel.onchange=()=>{updateChampionIcon(tr,champSel.value);showItems(tr,champSel.value);}
-}
-document.getElementById("addRowBtn").onclick=()=>addRow();
-
-// === Draft ===
-let draftChampionData = {};
-let picked = { blue: [], red: [] };
-let banned = { blue: [], red: [] };
-let currentStep = 0;
-let version = "15.21.1";
-
-/*
-  🧩 Ablauf:
-  - 10 Bans (abwechselnd, 5 pro Team)
-  - 10 Picks (abwechselnd, 5 pro Team)
-*/
-const PHASES = [
-  // 10 BANS (abwechselnd)
-  { type: "ban", team: "blue" },
-  { type: "ban", team: "red" },
-  { type: "ban", team: "blue" },
-  { type: "ban", team: "red" },
-  { type: "ban", team: "blue" },
-  { type: "ban", team: "red" },
-  { type: "ban", team: "blue" },
-  { type: "ban", team: "red" },
-  { type: "ban", team: "blue" },
-  { type: "ban", team: "red" },
-
-  // 10 PICKS (abwechselnd)
-  { type: "pick", team: "blue" },
-  { type: "pick", team: "red" },
-  { type: "pick", team: "blue" },
-  { type: "pick", team: "red" },
-  { type: "pick", team: "blue" },
-  { type: "pick", team: "red" },
-  { type: "pick", team: "blue" },
-  { type: "pick", team: "red" },
-  { type: "pick", team: "blue" },
-  { type: "pick", team: "red" },
-];
-
-async function loadChampions() {
-  const versions = await (await fetch("https://ddragon.leagueoflegends.com/api/versions.json")).json();
-  version = versions[0];
-  const data = await (await fetch(`https://ddragon.leagueoflegends.com/cdn/${version}/data/en_US/champion.json`)).json();
-  draftChampionData = data.data;
-  renderChampionGrid();
-  updatePhaseInfo();
-}
-
-function renderChampionGrid() {
-  const grid = document.querySelector(".champion-grid");
-  grid.innerHTML = "";
-  Object.values(draftChampionData).forEach(c => {
-    const img = document.createElement("img");
-    img.src = `https://ddragon.leagueoflegends.com/cdn/${version}/img/champion/${c.image.full}`;
-    img.title = c.name;
-    img.onclick = () => selectChampion(c.name, img.src);
-    grid.append(img);
-  });
-}
-
-function selectChampion(name, src) {
-  const step = PHASES[currentStep];
-  if (!step) return; // Draft ist fertig
-
-  // Prüfen, ob Champion schon gewählt/gebanned ist
-  if ([...banned.blue, ...banned.red, ...picked.blue, ...picked.red].includes(name)) return;
-
-  const teamBox = step.team === "blue" ? "team-blue" : "team-red";
-  const list = step.type === "ban" ? banned[step.team] : picked[step.team];
-
-  // Limit prüfen
-  if (list.length >= 5) return;
-
-  list.push(name);
-
-  const img = document.createElement("img");
-  img.src = src;
-  img.classList.add(step.type === "ban" ? "ban-icon" : "pick-icon");
-  img.title = `${step.type.toUpperCase()}: ${name}`;
-  document.querySelector(`#${teamBox} .${step.type === "ban" ? "bans" : "picks"}`).append(img);
-
-  // Nächster Schritt
-  currentStep++;
-  updatePhaseInfo();
-}
-
-function updatePhaseInfo() {
-  const step = PHASES[currentStep];
-  const phaseEl = document.getElementById("phase");
-
-  if (!step) {
-    phaseEl.textContent = "🎉 Draft abgeschlossen!";
-    return;
+// Multi-Tab Sync für DayPlan
+window.addEventListener("storage", (e) => {
+  if (e.key === "dayPlan") {
+    dayPlan = JSON.parse(e.newValue);
+    renderDayPlan();
   }
+});
 
-  const phaseName = step.type === "ban" ? "BAN" : "PICK";
-  const teamName = step.team === "blue" ? "Blau" : "Rot";
-  phaseEl.textContent = `${phaseName} – ${teamName} ist dran (${currentStep + 1}/${PHASES.length})`;
-}
-
-// Optionaler Button für manuelle Weitersteuerung
-document.getElementById("nextPhaseBtn").onclick = () => {
-  currentStep++;
-  updatePhaseInfo();
-};
-
-// Reset-Funktion
-document.getElementById("resetDraftBtn").onclick = () => {
-  picked = { blue: [], red: [] };
-  banned = { blue: [], red: [] };
-  currentStep = 0;
-  document.querySelectorAll(".bans,.picks").forEach(e => e.innerHTML = "");
-  updatePhaseInfo();
-};
-// === AUSGABEN-SYSTEM ===
-// === PERSONENLISTE ===
+// === PERSONENLISTE & AUSGABEN ===
 let personsList = JSON.parse(localStorage.getItem("persons")) || [];
+let expenses = JSON.parse(localStorage.getItem("expenses")) || [];
 
 function savePersons() {
   localStorage.setItem("persons", JSON.stringify(personsList));
+}
+function saveExpenses() {
+  localStorage.setItem("expenses", JSON.stringify(expenses));
 }
 
 function renderPersons() {
   const ul = document.getElementById("personList");
   ul.innerHTML = "";
-
   personsList.forEach((p, index) => {
     const li = document.createElement("li");
     li.className = "mdl-list__item";
@@ -736,15 +589,10 @@ function renderPersons() {
   });
 }
 
-// Person hinzufügen
 document.getElementById("addPersonBtn").onclick = () => {
   const val = document.getElementById("personInput").value.trim();
   if (!val) return;
-
-  if (personsList.includes(val)) {
-    alert("Diese Person existiert bereits!");
-    return;
-  }
+  if (personsList.includes(val)) { alert("Diese Person existiert bereits!"); return; }
 
   personsList.push(val);
   savePersons();
@@ -754,27 +602,16 @@ document.getElementById("addPersonBtn").onclick = () => {
   document.getElementById("personInput").value = "";
 };
 
-// Dropdown befüllen
 function renderExpensePersonDropdown() {
   const select = document.getElementById("expenseBy");
-  select.innerHTML = personsList
-    .map(p => `<option value="${p}">${p}</option>`)
-    .join("");
-}
-// === AUSGABEN ===
-let expenses = JSON.parse(localStorage.getItem("expenses")) || [];
-
-function saveExpenses() {
-  localStorage.setItem("expenses", JSON.stringify(expenses));
+  select.innerHTML = personsList.map(p => `<option value="${p}">${p}</option>`).join("");
 }
 
 function renderExpenses() {
   const tbody = document.querySelector("#expenseTable tbody");
   tbody.innerHTML = "";
-
   expenses.forEach((exp, index) => {
     const tr = document.createElement("tr");
-
     tr.innerHTML = `
       <td>${exp.name}</td>
       <td>${exp.amount.toFixed(2)} €</td>
@@ -783,88 +620,60 @@ function renderExpenses() {
         <button class="mdl-button mdl-js-button mdl-button--accent">🗑️</button>
       </td>
     `;
-
     tr.querySelector("button").onclick = () => {
       expenses.splice(index, 1);
       saveExpenses();
       renderExpenses();
       renderSettlement();
     };
-
     tbody.appendChild(tr);
   });
 }
 
-// Ausgabe hinzufügen
 document.getElementById("addExpenseBtn").onclick = () => {
   const name = document.getElementById("expenseName").value.trim();
   const amount = parseFloat(document.getElementById("expenseAmount").value);
   const by = document.getElementById("expenseBy").value.trim();
-
-  if (!name || !by || isNaN(amount) || amount <= 0) {
-    alert("Bitte Felder korrekt ausfüllen!");
-    return;
-  }
+  if (!name || !by || isNaN(amount) || amount <= 0) { alert("Bitte Felder korrekt ausfüllen!"); return; }
 
   expenses.push({ name, amount, by });
   saveExpenses();
-
   document.getElementById("expenseName").value = "";
   document.getElementById("expenseAmount").value = "";
-
   renderExpenses();
   renderSettlement();
 };
-// === SETTLEMENT ===
+
+// Settlement
 function renderSettlement() {
   const box = document.getElementById("settlementBox");
+  if (personsList.length === 0) { box.innerHTML = "<p>Bitte zuerst Personen hinzufügen.</p>"; return; }
+  if (expenses.length === 0) { box.innerHTML = "<p>Noch keine Ausgaben vorhanden.</p>"; return; }
 
-  if (personsList.length === 0) {
-    box.innerHTML = "<p>Bitte zuerst Personen hinzufügen.</p>";
-    return;
-  }
-
-  if (expenses.length === 0) {
-    box.innerHTML = "<p>Noch keine Ausgaben vorhanden.</p>";
-    return;
-  }
-
-  // Gesamt pro Person
   const totals = {};
   personsList.forEach(p => totals[p] = 0);
-
-  expenses.forEach(e => {
-    totals[e.by] += e.amount;
-  });
+  expenses.forEach(e => totals[e.by] += e.amount);
 
   const totalSpent = expenses.reduce((a, b) => a + b.amount, 0);
   const fairShare = totalSpent / personsList.length;
 
   const balance = {};
-  personsList.forEach(p => {
-    balance[p] = +(totals[p] - fairShare).toFixed(2);
-  });
+  personsList.forEach(p => balance[p] = +(totals[p] - fairShare).toFixed(2));
 
   let owes = personsList.filter(p => balance[p] < 0);
   let gets = personsList.filter(p => balance[p] > 0);
-
   owes.sort((a, b) => balance[a] - balance[b]);
   gets.sort((a, b) => balance[b] - balance[a]);
 
   const lines = [];
-
   let i = 0, j = 0;
-
   while (i < owes.length && j < gets.length) {
     const debtor = owes[i];
     const creditor = gets[j];
     const amount = Math.min(-balance[debtor], balance[creditor]);
-
     lines.push(`${debtor} ➜ ${creditor}: <strong>${amount.toFixed(2)} €</strong>`);
-
     balance[debtor] += amount;
     balance[creditor] -= amount;
-
     if (balance[debtor] === 0) i++;
     if (balance[creditor] === 0) j++;
   }
@@ -877,20 +686,112 @@ function renderSettlement() {
   `;
 }
 
+// Multi-Tab Sync für Personen & Ausgaben
+window.addEventListener("storage", (e) => {
+  if (e.key === "persons") { personsList = JSON.parse(e.newValue); renderPersons(); renderExpensePersonDropdown(); renderSettlement(); }
+  if (e.key === "expenses") { expenses = JSON.parse(e.newValue); renderExpenses(); renderSettlement(); }
+});
+
+// === DRAFT / SPIELPLAN ===
+let draftChampionData = {};
+let picked = [], banned = [];
+let currentStep = 0;
+const PHASES = [
+  { type: "ban", team: "blue" }, { type: "ban", team: "red" }, { type: "ban", team: "blue" }, { type: "ban", team: "red" },
+  { type: "ban", team: "blue" }, { type: "ban", team: "red" }, { type: "ban", team: "blue" }, { type: "ban", team: "red" },
+  { type: "ban", team: "blue" }, { type: "ban", team: "red" },
+  { type: "pick", team: "blue" }, { type: "pick", team: "red" }, { type: "pick", team: "blue" }, { type: "pick", team: "red" },
+  { type: "pick", team: "blue" }, { type: "pick", team: "red" }, { type: "pick", team: "blue" }, { type: "pick", team: "red" },
+  { type: "pick", team: "blue" }, { type: "pick", team: "red" }
+];
+
+function saveDraft() {
+  localStorage.setItem("draft", JSON.stringify({ picked, banned, currentStep }));
+}
+function loadDraft() {
+  const saved = JSON.parse(localStorage.getItem("draft"));
+  if (!saved) return;
+  picked = saved.picked || [];
+  banned = saved.banned || [];
+  currentStep = saved.currentStep || 0;
+  updatePhaseInfo();
+  renderDraftUI();
+}
+
+function renderDraftUI() {
+  const teams = ["blue", "red"];
+  teams.forEach(t => {
+    const box = document.getElementById(`team-${t}`);
+    box.querySelector(".bans").innerHTML = "";
+    box.querySelector(".picks").innerHTML = "";
+  });
+  picked.forEach((name, idx) => {
+    const team = PHASES[idx+10].team;
+    const img = document.createElement("img");
+    img.src = `https://ddragon.leagueoflegends.com/cdn/15.21.1/img/champion/${name}.png`;
+    img.classList.add("pick-icon");
+    document.querySelector(`#team-${team} .picks`).append(img);
+  });
+  banned.forEach((name, idx) => {
+    const team = PHASES[idx].team;
+    const img = document.createElement("img");
+    img.src = `https://ddragon.leagueoflegends.com/cdn/15.21.1/img/champion/${name}.png`;
+    img.classList.add("ban-icon");
+    document.querySelector(`#team-${team} .bans`).append(img);
+  });
+}
+
+function selectChampion(name, src) {
+  const step = PHASES[currentStep]; if (!step) return;
+  const list = step.type === "ban" ? banned : picked;
+  if ([...picked, ...banned].includes(name)) return;
+  list.push(name);
+  const teamBox = step.team === "blue" ? "team-blue" : "team-red";
+  const img = document.createElement("img");
+  img.src = src;
+  img.classList.add(step.type === "ban" ? "ban-icon" : "pick-icon");
+  img.title = `${step.type.toUpperCase()}: ${name}`;
+  document.querySelector(`#${teamBox} .${step.type === "ban" ? "bans" : "picks"}`).append(img);
+  currentStep++;
+  saveDraft();
+  updatePhaseInfo();
+}
+
+function updatePhaseInfo() {
+  const step = PHASES[currentStep];
+  const phaseEl = document.getElementById("phase");
+  if (!step) { phaseEl.textContent = "🎉 Draft abgeschlossen!"; return; }
+  const phaseName = step.type === "ban" ? "BAN" : "PICK";
+  const teamName = step.team === "blue" ? "Blau" : "Rot";
+  phaseEl.textContent = `${phaseName} – ${teamName} ist dran (${currentStep + 1}/${PHASES.length})`;
+}
+
+// Reset Draft
+document.getElementById("resetDraftBtn").onclick = () => {
+  picked = []; banned = []; currentStep = 0;
+  saveDraft();
+  renderDraftUI();
+  updatePhaseInfo();
+};
+
+// Multi-Tab Sync Draft
+window.addEventListener("storage", (e) => {
+  if (e.key === "draft") { loadDraft(); }
+});
+
 // === Init ===
-window.addEventListener("DOMContentLoaded",async()=>{
-  await loadChampionData(); addRow(); // start table
-  await loadChampions();              // load draft champs
+window.addEventListener("DOMContentLoaded", async () => {
+  renderDayPlan();
+  renderPersons();
+  renderExpensePersonDropdown();
   renderExpenses();
-renderSettlement();
-renderPersons();
-renderExpensePersonDropdown();
-  
+  renderSettlement();
+  loadDraft();
 });
 </script>
+
 </body>
 </html>
-
 
 
 
