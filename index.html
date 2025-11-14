@@ -346,17 +346,28 @@ setInterval(updateCountdown2, 1000);
 </section>
 
     <!-- TAB 4: Ausgaben -->
+
 <section class="mdl-layout__tab-panel" id="tab4">
   <div class="page-content" style="padding:20px; max-width:900px; margin:auto;">
+
     <h3>💰 Ausgaben & Kostenverteilung</h3>
 
-    <!-- Eingabe -->
+    <!-- Personenverwaltung -->
+    <h4>👥 Teilnehmer verwalten</h4>
+    <div style="display:flex; gap:10px; margin-bottom:15px;">
+      <input id="personInput" placeholder="Name hinzufügen..." style="padding:8px; flex:2;">
+      <button id="addPersonBtn" class="mdl-button mdl-js-button mdl-button--colored">+ Person</button>
+    </div>
+
+    <ul id="personList" class="mdl-list" style="margin-bottom:25px;"></ul>
+
+    <!-- Ausgabeneingabe -->
     <div style="display:flex; gap:10px; margin-bottom:20px;">
       <input id="expenseName" placeholder="Beschreibung" style="flex:2; padding:8px;">
       <input id="expenseAmount" type="number" placeholder="Betrag (€)" style="flex:1; padding:8px;">
-      <input id="expenseBy" placeholder="Bezahlt von" style="flex:1; padding:8px;">
+      <select id="expenseBy" style="flex:1; padding:8px;"></select>
       <button id="addExpenseBtn" class="mdl-button mdl-js-button mdl-button--colored">
-        + Hinzufügen
+        + Ausgabe
       </button>
     </div>
 
@@ -374,10 +385,11 @@ setInterval(updateCountdown2, 1000);
     </table>
 
     <h4 style="margin-top:30px;">📊 Abrechnung</h4>
-    <div id="settlementBox" style="padding:10px; background:#f0f0f0; border-radius:8px;"></div>
+    <div id="settlementBox"
+         style="padding:10px; background:#f0f0f0; border-radius:8px;"></div>
+
   </div>
 </section>
-
 
     <!-- TAB 5: Spielplan -->
     <section class="mdl-layout__tab-panel" id="tab5">
@@ -688,8 +700,68 @@ document.getElementById("resetDraftBtn").onclick = () => {
   document.querySelectorAll(".bans,.picks").forEach(e => e.innerHTML = "");
   updatePhaseInfo();
 };
-
 // === AUSGABEN-SYSTEM ===
+// === PERSONENLISTE ===
+let personsList = JSON.parse(localStorage.getItem("persons")) || [];
+
+function savePersons() {
+  localStorage.setItem("persons", JSON.stringify(personsList));
+}
+
+function renderPersons() {
+  const ul = document.getElementById("personList");
+  ul.innerHTML = "";
+
+  personsList.forEach((p, index) => {
+    const li = document.createElement("li");
+    li.className = "mdl-list__item";
+    li.style.display = "flex";
+    li.style.justifyContent = "space-between";
+    li.style.alignItems = "center";
+
+    li.innerHTML = `
+      <span>${p}</span>
+      <button class="mdl-button mdl-js-button mdl-button--accent">🗑️</button>
+    `;
+
+    li.querySelector("button").onclick = () => {
+      personsList.splice(index, 1);
+      savePersons();
+      renderPersons();
+      renderExpensePersonDropdown();
+      renderSettlement();
+    };
+
+    ul.appendChild(li);
+  });
+}
+
+// Person hinzufügen
+document.getElementById("addPersonBtn").onclick = () => {
+  const val = document.getElementById("personInput").value.trim();
+  if (!val) return;
+
+  if (personsList.includes(val)) {
+    alert("Diese Person existiert bereits!");
+    return;
+  }
+
+  personsList.push(val);
+  savePersons();
+  renderPersons();
+  renderExpensePersonDropdown();
+  renderSettlement();
+  document.getElementById("personInput").value = "";
+};
+
+// Dropdown befüllen
+function renderExpensePersonDropdown() {
+  const select = document.getElementById("expenseBy");
+  select.innerHTML = personsList
+    .map(p => `<option value="${p}">${p}</option>`)
+    .join("");
+}
+// === AUSGABEN ===
 let expenses = JSON.parse(localStorage.getItem("expenses")) || [];
 
 function saveExpenses() {
@@ -723,46 +795,70 @@ function renderExpenses() {
   });
 }
 
-// --- Kostenverteilung berechnen ---
-function renderSettlement() {
-  const box = document.getElementById("settlementBox");
-  if (!expenses.length) {
-    box.innerHTML = "<p>Noch keine Ausgaben eingetragen.</p>";
+// Ausgabe hinzufügen
+document.getElementById("addExpenseBtn").onclick = () => {
+  const name = document.getElementById("expenseName").value.trim();
+  const amount = parseFloat(document.getElementById("expenseAmount").value);
+  const by = document.getElementById("expenseBy").value.trim();
+
+  if (!name || !by || isNaN(amount) || amount <= 0) {
+    alert("Bitte Felder korrekt ausfüllen!");
     return;
   }
 
-  // Schritt 1: Wer hat wie viel bezahlt?
+  expenses.push({ name, amount, by });
+  saveExpenses();
+
+  document.getElementById("expenseName").value = "";
+  document.getElementById("expenseAmount").value = "";
+
+  renderExpenses();
+  renderSettlement();
+};
+// === SETTLEMENT ===
+function renderSettlement() {
+  const box = document.getElementById("settlementBox");
+
+  if (personsList.length === 0) {
+    box.innerHTML = "<p>Bitte zuerst Personen hinzufügen.</p>";
+    return;
+  }
+
+  if (expenses.length === 0) {
+    box.innerHTML = "<p>Noch keine Ausgaben vorhanden.</p>";
+    return;
+  }
+
+  // Gesamt pro Person
   const totals = {};
+  personsList.forEach(p => totals[p] = 0);
+
   expenses.forEach(e => {
-    if (!totals[e.by]) totals[e.by] = 0;
     totals[e.by] += e.amount;
   });
 
-  const persons = Object.keys(totals);
   const totalSpent = expenses.reduce((a, b) => a + b.amount, 0);
-  const fairShare = totalSpent / persons.length;
+  const fairShare = totalSpent / personsList.length;
 
-  // Schritt 2: Berechnen, wer zu viel & zu wenig bezahlt hat
   const balance = {};
-  persons.forEach(p => {
+  personsList.forEach(p => {
     balance[p] = +(totals[p] - fairShare).toFixed(2);
   });
 
-  // Schritt 3: Matching – Wer schuldet wem was?
-  let owes = persons.filter(p => balance[p] < 0);
-  let gets = persons.filter(p => balance[p] > 0);
+  let owes = personsList.filter(p => balance[p] < 0);
+  let gets = personsList.filter(p => balance[p] > 0);
+
+  owes.sort((a, b) => balance[a] - balance[b]);
+  gets.sort((a, b) => balance[b] - balance[a]);
 
   const lines = [];
-
-  owes = owes.sort((a,b)=>balance[a]-balance[b]);   // am meisten Schulden zuerst
-  gets = gets.sort((a,b)=>balance[b]-balance[a]);   // am meisten Guthaben zuerst
 
   let i = 0, j = 0;
 
   while (i < owes.length && j < gets.length) {
-    let debtor = owes[i];
-    let creditor = gets[j];
-    let amount = Math.min(-balance[debtor], balance[creditor]);
+    const debtor = owes[i];
+    const creditor = gets[j];
+    const amount = Math.min(-balance[debtor], balance[creditor]);
 
     lines.push(`${debtor} ➜ ${creditor}: <strong>${amount.toFixed(2)} €</strong>`);
 
@@ -775,33 +871,11 @@ function renderSettlement() {
 
   box.innerHTML = `
     <p><strong>Gesamtausgaben:</strong> ${totalSpent.toFixed(2)} €</p>
-    <p><strong>Pro Person fair:</strong> ${fairShare.toFixed(2)} €</p>
+    <p><strong>Fair pro Person:</strong> ${fairShare.toFixed(2)} €</p>
     <hr>
     ${lines.map(l => `<p>${l}</p>`).join("")}
   `;
 }
-
-// --- Hinzufügen einer Ausgabe ---
-document.getElementById("addExpenseBtn").onclick = () => {
-  const name = document.getElementById("expenseName").value.trim();
-  const amount = parseFloat(document.getElementById("expenseAmount").value);
-  const by = document.getElementById("expenseBy").value.trim();
-
-  if (!name || !by || isNaN(amount) || amount <= 0) {
-    alert("Bitte alle Felder korrekt ausfüllen!");
-    return;
-  }
-
-  expenses.push({ name, amount, by });
-  saveExpenses();
-
-  document.getElementById("expenseName").value = "";
-  document.getElementById("expenseAmount").value = "";
-  document.getElementById("expenseBy").value = "";
-
-  renderExpenses();
-  renderSettlement();
-};
 
 // === Init ===
 window.addEventListener("DOMContentLoaded",async()=>{
@@ -809,11 +883,14 @@ window.addEventListener("DOMContentLoaded",async()=>{
   await loadChampions();              // load draft champs
   renderExpenses();
 renderSettlement();
-
+renderPerson();
+renderExpensePersonDropdown();
+  
 });
 </script>
 </body>
 </html>
+
 
 
 
